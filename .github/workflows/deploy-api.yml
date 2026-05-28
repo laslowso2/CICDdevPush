@@ -66,7 +66,7 @@ jobs:
           apictl add env dev-local \
             --apim "${APIM_HOST}" \
             --token "${APIM_HOST}/oauth2/token"
-      - name: Pre-register client and login
+      - name: Register client and get token
         run: |
           CLIENT=$(curl -sk \
             -X POST \
@@ -74,18 +74,21 @@ jobs:
             -d '{"clientName":"apictl-github","owner":"'"${APIM_USERNAME}"'","grantType":"password refresh_token","saasApp":true}' \
             -u "${APIM_USERNAME}:${APIM_PASSWORD}" \
             "${APIM_HOST}/client-registration/v0.17/register")
+          echo "Client response: $CLIENT"
           CLIENT_ID=$(echo $CLIENT | jq -r '.clientId')
           CLIENT_SECRET=$(echo $CLIENT | jq -r '.clientSecret')
-          echo "CLIENT_ID=${CLIENT_ID}" >> $GITHUB_ENV
-          echo "CLIENT_SECRET=${CLIENT_SECRET}" >> $GITHUB_ENV
-          TOKEN=$(curl -sk \
+          TOKEN_RESPONSE=$(curl -sk \
             -X POST \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "grant_type=password&username=${APIM_USERNAME}&password=${APIM_PASSWORD}&scope=apim:api_import_export apim:api_view apim:api_create apim:api_publish" \
             -u "${CLIENT_ID}:${CLIENT_SECRET}" \
-            "${APIM_HOST}/oauth2/token" | jq -r '.access_token')
-          mkdir -p ~/.wso2apictl.local
-          cat > ~/.wso2apictl.local/keys.json << EOF
+            "${APIM_HOST}/oauth2/token")
+          echo "Token response: $TOKEN_RESPONSE"
+          ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.access_token')
+          REFRESH_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.refresh_token')
+          KEYS_FILE="${HOME}/.wso2apictl/keys.json"
+          mkdir -p "${HOME}/.wso2apictl"
+          cat > "${KEYS_FILE}" << EOF
           {
             "environments": {
               "dev-local": {
@@ -94,12 +97,14 @@ jobs:
                 "ConsumerSecret": "${CLIENT_SECRET}",
                 "Username": "${APIM_USERNAME}",
                 "Password": "",
-                "AccessToken": "${TOKEN}",
-                "RefreshToken": ""
+                "AccessToken": "${ACCESS_TOKEN}",
+                "RefreshToken": "${REFRESH_TOKEN}"
               }
             }
           }
           EOF
+          echo "Keys file written to ${KEYS_FILE}"
+          cat "${KEYS_FILE}"
       - name: Import API
         run: |
           PARAMS_FILE="${{ matrix.api_path }}/params.yaml"
