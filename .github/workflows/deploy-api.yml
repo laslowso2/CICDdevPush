@@ -58,9 +58,8 @@ jobs:
             "https://github.com/wso2/product-apim-tooling/releases/download/v${APICTL_VERSION}/apictl-${APICTL_VERSION}-linux-amd64.tar.gz" \
             -o apictl.tar.gz
           tar -xzf apictl.tar.gz
-          find . -name "apictl" -type f
-          chmod +x ./apictl
-          sudo mv ./apictl /usr/local/bin/apictl
+          chmod +x ./apictl/apictl
+          sudo mv ./apictl/apictl /usr/local/bin/apictl
           apictl version
       - name: Add APIM environment
         run: |
