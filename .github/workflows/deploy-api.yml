@@ -74,7 +74,6 @@ jobs:
             -d '{"clientName":"apictl-github","owner":"'"${APIM_USERNAME}"'","grantType":"password refresh_token","saasApp":true}' \
             -u "${APIM_USERNAME}:${APIM_PASSWORD}" \
             "${APIM_HOST}/client-registration/v0.17/register")
-          echo "Client response: $CLIENT"
           CLIENT_ID=$(echo $CLIENT | jq -r '.clientId')
           CLIENT_SECRET=$(echo $CLIENT | jq -r '.clientSecret')
           TOKEN_RESPONSE=$(curl -sk \
@@ -83,29 +82,19 @@ jobs:
             -d "grant_type=password&username=${APIM_USERNAME}&password=${APIM_PASSWORD}&scope=apim:api_import_export apim:api_view apim:api_create apim:api_publish" \
             -u "${CLIENT_ID}:${CLIENT_SECRET}" \
             "${APIM_HOST}/oauth2/token")
-          echo "Token response: $TOKEN_RESPONSE"
           ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.access_token')
           REFRESH_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.refresh_token')
-          KEYS_FILE="${HOME}/.wso2apictl/keys.json"
-          mkdir -p "${HOME}/.wso2apictl"
-          cat > "${KEYS_FILE}" << EOF
-          {
-            "environments": {
-              "dev-local": {
-                "TokenEndpoint": "${APIM_HOST}/oauth2/token",
-                "ConsumerKey": "${CLIENT_ID}",
-                "ConsumerSecret": "${CLIENT_SECRET}",
-                "Username": "${APIM_USERNAME}",
-                "Password": "",
-                "AccessToken": "${ACCESS_TOKEN}",
-                "RefreshToken": "${REFRESH_TOKEN}"
-              }
-            }
-          }
-          EOF
-          echo "Keys file written to ${KEYS_FILE}"
-          cat "${KEYS_FILE}"
-      - name: Import API
+          echo "ACCESS_TOKEN=${ACCESS_TOKEN}" >> $GITHUB_ENV
+          echo "CLIENT_ID=${CLIENT_ID}" >> $GITHUB_ENV
+          echo "CLIENT_SECRET=${CLIENT_SECRET}" >> $GITHUB_ENV
+          echo "REFRESH_TOKEN=${REFRESH_TOKEN}" >> $GITHUB_ENV
+      - name: Debug apictl config location
+        run: |
+          apictl get envs
+          find / -name "keys.json" 2>/dev/null || true
+          find / -name "*.wso2apictl*" -type d 2>/dev/null || true
+          echo "HOME is: $HOME"
+      - name: Import API using token directly
         run: |
           PARAMS_FILE="${{ matrix.api_path }}/params.yaml"
           if [ ! -f "$PARAMS_FILE" ]; then
@@ -117,7 +106,11 @@ jobs:
             --params $PARAMS_FILE \
             --update \
             --preserve-provider \
+            --token "${ACCESS_TOKEN}" \
             -k
       - name: Verify deployment
         run: |
-          apictl get apis --environment dev-local -k
+          apictl get apis \
+            --environment dev-local \
+            --token "${ACCESS_TOKEN}" \
+            -k
