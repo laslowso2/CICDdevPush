@@ -65,12 +65,13 @@ jobs:
         run: |
           apictl add env dev-local \
             --apim "${APIM_HOST}" \
-            --token "${APIM_HOST}/oauth2/token"
+            --token "${APIM_HOST}/oauth2/token" \
+            --registration "${APIM_HOST}/client-registration/v0.17/register"
       - name: Login to APIM
         run: |
-          apictl login dev-local \
+          echo "${APIM_PASSWORD}" | apictl login dev-local \
             -u "${APIM_USERNAME}" \
-            -p "${APIM_PASSWORD}" \
+            --password-stdin \
             -k
       - name: Import API
         run: |
