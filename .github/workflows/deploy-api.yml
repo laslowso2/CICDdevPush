@@ -74,8 +74,10 @@ jobs:
             -k
       - name: Import API
         run: |
+          API_ABS_PATH="${GITHUB_WORKSPACE}/${{ matrix.api_path }}"
+          echo "Importing from: ${API_ABS_PATH}"
           apictl import api \
-            --file ./${{ matrix.api_path }} \
+            --file "${API_ABS_PATH}" \
             --environment dev-local \
             --update \
             --preserve-provider \
