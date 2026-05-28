@@ -65,14 +65,41 @@ jobs:
         run: |
           apictl add env dev-local \
             --apim "${APIM_HOST}" \
-            --token "${APIM_HOST}/oauth2/token" \
-            --registration "${APIM_HOST}/client-registration/v0.17/register"
-      - name: Login to APIM
+            --token "${APIM_HOST}/oauth2/token"
+      - name: Pre-register client and login
         run: |
-          echo "${APIM_PASSWORD}" | apictl login dev-local \
-            -u "${APIM_USERNAME}" \
-            --password-stdin \
-            -k
+          CLIENT=$(curl -sk \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"clientName":"apictl-github","owner":"'"${APIM_USERNAME}"'","grantType":"password refresh_token","saasApp":true}' \
+            -u "${APIM_USERNAME}:${APIM_PASSWORD}" \
+            "${APIM_HOST}/client-registration/v0.17/register")
+          CLIENT_ID=$(echo $CLIENT | jq -r '.clientId')
+          CLIENT_SECRET=$(echo $CLIENT | jq -r '.clientSecret')
+          echo "CLIENT_ID=${CLIENT_ID}" >> $GITHUB_ENV
+          echo "CLIENT_SECRET=${CLIENT_SECRET}" >> $GITHUB_ENV
+          TOKEN=$(curl -sk \
+            -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=password&username=${APIM_USERNAME}&password=${APIM_PASSWORD}&scope=apim:api_import_export apim:api_view apim:api_create apim:api_publish" \
+            -u "${CLIENT_ID}:${CLIENT_SECRET}" \
+            "${APIM_HOST}/oauth2/token" | jq -r '.access_token')
+          mkdir -p ~/.wso2apictl.local
+          cat > ~/.wso2apictl.local/keys.json << EOF
+          {
+            "environments": {
+              "dev-local": {
+                "TokenEndpoint": "${APIM_HOST}/oauth2/token",
+                "ConsumerKey": "${CLIENT_ID}",
+                "ConsumerSecret": "${CLIENT_SECRET}",
+                "Username": "${APIM_USERNAME}",
+                "Password": "",
+                "AccessToken": "${TOKEN}",
+                "RefreshToken": ""
+              }
+            }
+          }
+          EOF
       - name: Import API
         run: |
           PARAMS_FILE="${{ matrix.api_path }}/params.yaml"
