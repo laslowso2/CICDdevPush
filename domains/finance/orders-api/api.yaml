@@ -1,0 +1,27 @@
+type: api
+version: v4.3.0
+data:
+  name: CustomerOrderAPI
+  context: /customer-order
+  version: "1.0"
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isRevision: false
+  revisionId: 0
+  type: HTTP
+  transport:
+  - http
+  - https
+  policies:
+  - Bronze
+  - Silver
+  - Gold
+  visibility: PUBLIC
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: http://localhost:8080/api/orders
+    sandbox_endpoints:
+      url: http://localhost:8081/api/orders
+  endpointImplementationType: ENDPOINT
+  websubSubscriptionConfiguration: null

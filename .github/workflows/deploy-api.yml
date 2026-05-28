@@ -72,19 +72,11 @@ jobs:
             -u "${APIM_USERNAME}" \
             --password-stdin \
             -k
-          echo "Keys file location:"
-          find / -name "keys.json" 2>/dev/null | grep wso2 || true
-          find / -name "*.wso2*" -type d 2>/dev/null || true
       - name: Import API
         run: |
-          PARAMS_FILE="${{ matrix.api_path }}/params.yaml"
-          if [ ! -f "$PARAMS_FILE" ]; then
-            PARAMS_FILE="shared/params-dev.yaml"
-          fi
           apictl import api \
             --file ./${{ matrix.api_path }} \
             --environment dev-local \
-            --params $PARAMS_FILE \
             --update \
             --preserve-provider \
             -k
