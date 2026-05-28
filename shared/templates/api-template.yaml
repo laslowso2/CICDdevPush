@@ -1,0 +1,79 @@
+# --------------------------------------------------------------------
+# Shared API template - copy this into your api.yaml and adjust the
+# values marked with # CHANGE THIS for each new API.
+# --------------------------------------------------------------------
+
+type: api
+version: v4.5.0
+data:
+  name: YourAPIName         # CHANGE THIS
+  version: "1.0"            # CHANGE THIS if needed
+  context: /your-api/1.0   # CHANGE THIS - must be unique across all APIs
+
+  lifeCycleStatus: PUBLISHED
+
+  visibility: PUBLIC
+  subscriptionAvailability: ALL_TENANTS
+
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: http://your-backend-host/api  # CHANGE THIS or override in params.yaml
+    sandbox_endpoints:
+      url: http://your-sandbox-host/api  # CHANGE THIS or override in params.yaml
+
+  # Security - both OAuth2 and API Key enabled by default
+  securityScheme:
+    - oauth2
+    - api_key
+
+  authorizationHeader: Authorization
+
+  # Subscription tiers - all three available to subscribers
+  policies:
+    - Bronze       # 1 000 req/min  - Trial
+    - Silver       # 5 000 req/min  - Standard
+    - Gold         # 20 000 req/min - Enterprise
+
+  # CORS - permissive for dev, tighten for production
+  corsConfiguration:
+    corsConfigurationEnabled: true
+    accessControlAllowOrigins:
+      - "*"
+    accessControlAllowCredentials: false
+    accessControlAllowHeaders:
+      - authorization
+      - Access-Control-Allow-Origin
+      - Content-Type
+      - SOAPAction
+      - apikey
+      - Internal-Key
+    accessControlAllowMethods:
+      - GET
+      - PUT
+      - POST
+      - DELETE
+      - OPTIONS
+
+  # Tags - add domain-specific tags for discoverability in Dev Portal
+  tags:
+    - demo          # CHANGE THIS
+
+  businessInformation:
+    businessOwner: API Product Team           # CHANGE THIS
+    businessOwnerEmail: api-team@example.com  # CHANGE THIS
+    technicalOwner: Platform Engineering
+    technicalOwnerEmail: platform@example.com
+
+  # Operations - add one entry per path+verb from your swagger.yaml
+  # Throttle policy values must match policies defined in APIM Admin Portal
+  operations:
+    - target: /resource            # CHANGE THIS to match your paths
+      verb: GET
+      throttlingPolicy: 10PerMin
+      authType: Application & Application User
+
+    - target: /resource
+      verb: POST
+      throttlingPolicy: 5PerMin
+      authType: Application & Application User

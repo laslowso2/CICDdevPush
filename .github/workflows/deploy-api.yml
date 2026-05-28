@@ -1,0 +1,89 @@
+name: Deploy API to WSO2 APIM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "domains/**"
+  workflow_dispatch:
+    inputs:
+      api_path:
+        description: "Path to API folder e.g. domains/finance/orders-api"
+        required: true
+
+jobs:
+  detect-changed-api:
+    name: Detect which API changed
+    runs-on: ubuntu-latest
+    outputs:
+      api_paths: ${{ steps.detect.outputs.api_paths }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect changed API folders
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "api_paths=[\"${{ github.event.inputs.api_path }}\"]" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^domains/' | \
+              sed 's|/[^/]*$||' | sed 's|/[^/]*$||' | sort -u | \
+              jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "api_paths=$CHANGED" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-api:
+    name: Deploy ${{ matrix.api_path }}
+    needs: detect-changed-api
+    runs-on: ubuntu-latest
+    if: needs.detect-changed-api.outputs.api_paths != '[]'
+    strategy:
+      matrix:
+        api_path: ${{ fromJson(needs.detect-changed-api.outputs.api_paths) }}
+      fail-fast: false
+    env:
+      APICTL_VERSION: "4.3.1"
+      APIM_HOST: ${{ secrets.APIM_HOST }}
+      APIM_USERNAME: ${{ secrets.APIM_USERNAME }}
+      APIM_PASSWORD: ${{ secrets.APIM_PASSWORD }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install apictl
+        run: |
+          curl -sL \
+            "https://github.com/wso2/product-apim-tooling/releases/download/v${APICTL_VERSION}/apictl-${APICTL_VERSION}-linux-amd64.tar.gz" \
+            -o apictl.tar.gz
+          tar -xzf apictl.tar.gz
+          sudo mv apictl /usr/local/bin/apictl
+          apictl version
+      - name: Add APIM environment
+        run: |
+          apictl add env dev-local \
+            --apim "${APIM_HOST}" \
+            --token "${APIM_HOST}/oauth2/token"
+      - name: Login to APIM
+        run: |
+          apictl login dev-local \
+            -u "${APIM_USERNAME}" \
+            -p "${APIM_PASSWORD}" \
+            -k
+      - name: Import API
+        run: |
+          PARAMS_FILE="${{ matrix.api_path }}/params.yaml"
+          if [ ! -f "$PARAMS_FILE" ]; then
+            PARAMS_FILE="shared/params-dev.yaml"
+          fi
+          apictl import api \
+            --file ./${{ matrix.api_path }} \
+            --environment dev-local \
+            --params $PARAMS_FILE \
+            --update \
+            --preserve-provider \
+            -k
+      - name: Verify deployment
+        run: |
+          apictl get apis --environment dev-local -k

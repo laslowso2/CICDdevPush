@@ -1,0 +1,15 @@
+environments:
+  - name: dev-local
+    configs:
+      endpoints:
+        production:
+          url: http://localhost:8080/api/orders
+        sandbox:
+          url: http://localhost:8081/api/orders
+      policies:
+        - Bronze
+        - Silver
+        - Gold
+      deploymentEnvironments:
+        - displayOnDevportal: true
+          deploymentEnvironment: Default

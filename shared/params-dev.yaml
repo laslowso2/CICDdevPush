@@ -1,0 +1,25 @@
+environments:
+  - name: dev-local
+    configs:
+      # Shared fallback params used when an API folder does not have its own params.yaml.
+      # APIs that need a different backend URL should include their own params.yaml.
+      endpoints:
+        production:
+          url: http://localhost:8080
+        sandbox:
+          url: http://localhost:8081
+
+      security:
+        - type: OAuth2
+          enabled: true
+        - type: APIKey
+          enabled: true
+
+      policies:
+        - Bronze
+        - Silver
+        - Gold
+
+      deploymentEnvironments:
+        - displayOnDevportal: true
+          deploymentEnvironment: Default
