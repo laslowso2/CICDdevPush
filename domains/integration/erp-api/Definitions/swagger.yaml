@@ -1,0 +1,75 @@
+openapi: 3.0.0
+info:
+  title: ERP Integration API
+  version: "1.0"
+  description: Integration API for ERP system connectivity
+paths:
+  /inventory:
+    get:
+      summary: Get inventory items
+      operationId: getInventory
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+  /inventory/{itemId}:
+    get:
+      summary: Get inventory item by ID
+      operationId: getInventoryItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+  /purchase-orders:
+    get:
+      summary: List purchase orders
+      operationId: listPurchaseOrders
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create purchase order
+      operationId: createPurchaseOrder
+      responses:
+        "201":
+          description: Created
+  /purchase-orders/{orderId}:
+    get:
+      summary: Get purchase order
+      operationId: getPurchaseOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://localhost:9443/oauth2/token
+          scopes:
+            erp:read: Read ERP data
+            erp:write: Write ERP data
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+security:
+  - OAuth2:
+      - erp:read

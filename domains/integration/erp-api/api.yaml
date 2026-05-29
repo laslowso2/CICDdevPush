@@ -1,0 +1,40 @@
+type: api
+version: v4.3.0
+data:
+  name: ERPIntegrationAPI
+  context: /erp-integration
+  version: "1.0"
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isRevision: false
+  revisionId: 0
+  type: HTTP
+  transport:
+  - https
+  policies:
+  - Bronze
+  - Silver
+  - Gold
+  visibility: PUBLIC
+  securityScheme:
+  - oauth2
+  - api_key
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: https://localhost:9090/api/erp
+    sandbox_endpoints:
+      url: https://localhost:9091/api/erp
+    endpoint_security:
+      production:
+        type: BASIC
+        enabled: true
+        username: admin
+        password: admin123
+      sandbox:
+        type: BASIC
+        enabled: true
+        username: admin
+        password: admin123
+  endpointImplementationType: ENDPOINT
+  websubSubscriptionConfiguration: null
