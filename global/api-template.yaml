@@ -33,7 +33,6 @@ data:
 
   # Visibility
   visibility: PUBLIC
-  subscriptionAvailability: ALL_TENANTS
 
   # CORS - permissive for all environments
   corsConfiguration:
