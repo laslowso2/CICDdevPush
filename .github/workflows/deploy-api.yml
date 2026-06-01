@@ -69,7 +69,7 @@ jobs:
         run: |
           pip install pyyaml --quiet
           python3 << 'PYEOF'
-          import yaml, sys, os
+          import yaml
 
           global_file = "global/api-template.yaml"
           api_file = "${{ matrix.api_path }}/api.yaml"
@@ -81,7 +81,6 @@ jobs:
           with open(api_file) as f:
               api_cfg = yaml.safe_load(f)
 
-          # Deep merge: global is the base, api-specific overrides on top
           def deep_merge(base, override):
               result = base.copy()
               for k, v in override.items():
@@ -99,13 +98,11 @@ jobs:
 
           with open(output_file, "w") as f:
               yaml.dump(merged, f, default_flow_style=False, allow_unicode=True)
-
-          print("Merged api.yaml:")
-          with open(output_file) as f:
-              print(f.read())
           PYEOF
 
-          # Replace api.yaml with merged version
+          echo "=== MERGED api.yaml CONTENT ==="
+          cat "${{ matrix.api_path }}/api.yaml.merged"
+          echo "=== END ==="
           mv "${{ matrix.api_path }}/api.yaml.merged" "${{ matrix.api_path }}/api.yaml"
 
       - name: Add APIM environment
