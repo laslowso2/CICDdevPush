@@ -1,0 +1,74 @@
+type: api
+version: v4.3.0
+data:
+  name: InventoryAPI
+  context: /inventory
+  version: "1.0"
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isRevision: false
+  revisionId: 0
+  type: HTTP
+  transport:
+  - https
+  policies:
+  - Bronze
+  - Silver
+  - Gold
+  visibility: PUBLIC
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: https://localhost:9090/api/inventory
+    sandbox_endpoints:
+      url: https://localhost:9091/api/inventory
+    endpoint_security:
+      production:
+        type: BASIC
+        enabled: true
+        username: admin
+        password: admin123
+      sandbox:
+        type: BASIC
+        enabled: true
+        username: admin
+        password: admin123
+  endpointImplementationType: ENDPOINT
+  websubSubscriptionConfiguration: null
+  operations:
+  - target: /products
+    verb: GET
+    throttlingPolicy: 10PerMin
+    authType: Application & Application User
+  - target: /products
+    verb: POST
+    throttlingPolicy: 5PerMin
+    authType: Application & Application User
+  - target: /products/{productId}
+    verb: GET
+    throttlingPolicy: 10PerMin
+    authType: Application & Application User
+  - target: /products/{productId}
+    verb: PUT
+    throttlingPolicy: 5PerMin
+    authType: Application & Application User
+  - target: /stock/{productId}
+    verb: GET
+    throttlingPolicy: 10PerMin
+    authType: Application & Application User
+  - target: /stock/{productId}
+    verb: PATCH
+    throttlingPolicy: 5PerMin
+    authType: Application & Application User
+  - target: /warehouses
+    verb: GET
+    throttlingPolicy: 10PerMin
+    authType: Application & Application User
+  - target: /warehouses/{warehouseId}/stock
+    verb: GET
+    throttlingPolicy: 10PerMin
+    authType: Application & Application User
+  tags:
+  - integration
+  - inventory
+  - demo
