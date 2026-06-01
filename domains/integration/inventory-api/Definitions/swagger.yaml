@@ -1,0 +1,134 @@
+openapi: 3.0.0
+info:
+  title: Inventory API
+  version: "1.0"
+  description: Manages stock levels, warehouse locations, and product catalog
+paths:
+  /products:
+    get:
+      summary: List all products
+      operationId: listProducts
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: inStock
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create a product
+      operationId: createProduct
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid request
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      operationId: getProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+    put:
+      summary: Update product
+      operationId: updateProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+
+  /stock/{productId}:
+    get:
+      summary: Get stock level for a product
+      operationId: getStock
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+    patch:
+      summary: Adjust stock level
+      operationId: adjustStock
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+
+  /warehouses:
+    get:
+      summary: List warehouses
+      operationId: listWarehouses
+      responses:
+        "200":
+          description: OK
+
+  /warehouses/{warehouseId}/stock:
+    get:
+      summary: Get all stock at a warehouse
+      operationId: getWarehouseStock
+      parameters:
+        - name: warehouseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://localhost:9443/oauth2/token
+          scopes:
+            inventory:read: Read inventory data
+            inventory:write: Write inventory data
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+security:
+  - OAuth2:
+      - inventory:read
