@@ -1,0 +1,31 @@
+environments:
+  - name: prod
+    configs:
+      endpoints:
+        production:
+          url: http://prod-backend/api
+        sandbox:
+          url: http://prod-backend-sandbox/api
+      security:
+        - type: oauth2
+          enabled: true
+        - type: api_key
+          enabled: true
+      endpointSecurity:
+        production:
+          type: basic
+          enabled: true
+          username: prodAccount
+          password: ProdBackend789
+        sandbox:
+          type: basic
+          enabled: true
+          username: prodAccount
+          password: ProdBackend789
+      policies:
+        - Bronze
+        - Silver
+        - Gold
+      deploymentEnvironments:
+        - displayOnDevportal: true
+          deploymentEnvironment: Default

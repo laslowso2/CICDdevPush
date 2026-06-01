@@ -1,0 +1,31 @@
+environments:
+  - name: stage-local
+    configs:
+      endpoints:
+        production:
+          url: http://localhost:8090/api
+        sandbox:
+          url: http://localhost:8091/api
+      security:
+        - type: oauth2
+          enabled: true
+        - type: api_key
+          enabled: true
+      endpointSecurity:
+        production:
+          type: basic
+          enabled: true
+          username: stageAccount
+          password: StageBackend456
+        sandbox:
+          type: basic
+          enabled: true
+          username: stageAccount
+          password: StageBackend456
+      policies:
+        - Bronze
+        - Silver
+        - Gold
+      deploymentEnvironments:
+        - displayOnDevportal: true
+          deploymentEnvironment: Default

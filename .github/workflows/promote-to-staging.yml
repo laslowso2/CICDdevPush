@@ -1,0 +1,132 @@
+name: Promote API to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_name:
+        description: "API name exactly as in APIM e.g. CustomerOrderAPI"
+        required: true
+      api_version:
+        description: "API version e.g. 1.0"
+        required: true
+      domain:
+        description: "Domain folder e.g. finance or integration"
+        required: true
+
+jobs:
+  promote-to-staging:
+    name: Export from Dev and promote to Staging
+    runs-on: ubuntu-latest
+
+    env:
+      APICTL_VERSION: "4.3.1"
+      DEV_HOST: ${{ secrets.APIM_HOST }}
+      DEV_USERNAME: ${{ secrets.APIM_USERNAME }}
+      DEV_PASSWORD: ${{ secrets.APIM_PASSWORD }}
+      STAGE_HOST: ${{ secrets.STAGE_APIM_HOST }}
+      STAGE_USERNAME: ${{ secrets.STAGE_APIM_USERNAME }}
+      STAGE_PASSWORD: ${{ secrets.STAGE_APIM_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install apictl
+        run: |
+          curl -sL \
+            "https://github.com/wso2/product-apim-tooling/releases/download/v${APICTL_VERSION}/apictl-${APICTL_VERSION}-linux-amd64.tar.gz" \
+            -o apictl.tar.gz
+          tar -xzf apictl.tar.gz
+          chmod +x ./apictl/apictl
+          sudo mv ./apictl/apictl /usr/local/bin/apictl
+          apictl version
+
+      - name: Add Dev and Stage environments
+        run: |
+          apictl add env dev-local \
+            --apim "${DEV_HOST}" \
+            --token "${DEV_HOST}/oauth2/token"
+          apictl add env stage-local \
+            --apim "${STAGE_HOST}" \
+            --token "${STAGE_HOST}/oauth2/token"
+
+      - name: Login to Dev APIM
+        run: |
+          echo "${DEV_PASSWORD}" | apictl login dev-local \
+            -u "${DEV_USERNAME}" \
+            --password-stdin \
+            -k
+
+      - name: Login to Stage APIM
+        run: |
+          echo "${STAGE_PASSWORD}" | apictl login stage-local \
+            -u "${STAGE_USERNAME}" \
+            --password-stdin \
+            -k
+
+      - name: Export API from Dev
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          API_NAME="${{ github.event.inputs.api_name }}"
+          API_VERSION="${{ github.event.inputs.api_version }}"
+          DOMAIN="${{ github.event.inputs.domain }}"
+          ARTIFACT_NAME="${API_NAME}-${API_VERSION}-${TIMESTAMP}"
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "API_NAME=${API_NAME}" >> $GITHUB_ENV
+          echo "API_VERSION=${API_VERSION}" >> $GITHUB_ENV
+          echo "DOMAIN=${DOMAIN}" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          mkdir -p exported
+          apictl export api \
+            --name "${API_NAME}" \
+            --version "${API_VERSION}" \
+            --environment dev-local \
+            --format JSON \
+            -k
+          find ${HOME}/.wso2apictl -name "*.zip" | head -1
+          EXPORTED_ZIP=$(find ${HOME}/.wso2apictl -name "*.zip" | head -1)
+          cp "${EXPORTED_ZIP}" "exported/${ARTIFACT_NAME}.zip"
+          echo "EXPORTED_ZIP=exported/${ARTIFACT_NAME}.zip" >> $GITHUB_ENV
+          echo "Exported: exported/${ARTIFACT_NAME}.zip"
+
+      - name: Save artifact to repo
+        run: |
+          mkdir -p "artifacts/staging/${{ github.event.inputs.domain }}"
+          cp "${EXPORTED_ZIP}" "artifacts/staging/${DOMAIN}/${ARTIFACT_NAME}.zip"
+
+      - name: Import API to Staging
+        run: |
+          apictl import api \
+            --file "${GITHUB_WORKSPACE}/artifacts/staging/${DOMAIN}/${ARTIFACT_NAME}.zip" \
+            --environment stage-local \
+            --params "${GITHUB_WORKSPACE}/environments/staging.params.yaml" \
+            --update \
+            --preserve-provider \
+            -k
+
+      - name: Verify deployment on Staging
+        run: |
+          apictl get apis --environment stage-local -k
+
+      - name: Commit artifact and create git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "artifacts/staging/${DOMAIN}/${ARTIFACT_NAME}.zip"
+          git commit -m "artifact(staging/${DOMAIN}): ${ARTIFACT_NAME}"
+          git tag "staging/${API_NAME}/${API_VERSION}/${TIMESTAMP}"
+          git push origin main
+          git push origin "staging/${API_NAME}/${API_VERSION}/${TIMESTAMP}"
+
+      - name: Summary
+        run: |
+          echo "### Promoted to Staging" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API | ${API_NAME} v${API_VERSION} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Domain | ${DOMAIN} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | ${ARTIFACT_NAME}.zip |" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage APIM | ${STAGE_HOST} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Git tag | staging/${API_NAME}/${API_VERSION}/${TIMESTAMP} |" >> $GITHUB_STEP_SUMMARY

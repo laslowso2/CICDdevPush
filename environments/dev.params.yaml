@@ -1,0 +1,31 @@
+environments:
+  - name: dev-local
+    configs:
+      endpoints:
+        production:
+          url: http://localhost:8080/api
+        sandbox:
+          url: http://localhost:8081/api
+      security:
+        - type: oauth2
+          enabled: true
+        - type: api_key
+          enabled: true
+      endpointSecurity:
+        production:
+          type: basic
+          enabled: true
+          username: admin
+          password: admin123
+        sandbox:
+          type: basic
+          enabled: true
+          username: admin
+          password: admin123
+      policies:
+        - Bronze
+        - Silver
+        - Gold
+      deploymentEnvironments:
+        - displayOnDevportal: true
+          deploymentEnvironment: Default
