@@ -47,7 +47,7 @@ jobs:
         api_path: ${{ fromJson(needs.detect-changed-api.outputs.api_paths) }}
       fail-fast: false
     env:
-      APICTL_VERSION: "4.3.1"
+      APICTL_VERSION: "4.7.0"
       APIM_HOST: ${{ secrets.APIM_HOST }}
       APIM_USERNAME: ${{ secrets.APIM_USERNAME }}
       APIM_PASSWORD: ${{ secrets.APIM_PASSWORD }}

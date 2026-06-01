@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      APICTL_VERSION: "4.3.1"
+      APICTL_VERSION: "4.7.0"
       DEV_HOST: ${{ secrets.APIM_HOST }}
       DEV_USERNAME: ${{ secrets.APIM_USERNAME }}
       DEV_PASSWORD: ${{ secrets.APIM_PASSWORD }}
