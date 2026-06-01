@@ -38,35 +38,27 @@ data:
   operations:
   - target: /products
     verb: GET
-    throttlingPolicy: 10PerMin
     authType: Application & Application User
   - target: /products
     verb: POST
-    throttlingPolicy: 5PerMin
     authType: Application & Application User
   - target: /products/{productId}
     verb: GET
-    throttlingPolicy: 10PerMin
     authType: Application & Application User
   - target: /products/{productId}
     verb: PUT
-    throttlingPolicy: 5PerMin
     authType: Application & Application User
   - target: /stock/{productId}
     verb: GET
-    throttlingPolicy: 10PerMin
     authType: Application & Application User
   - target: /stock/{productId}
     verb: PATCH
-    throttlingPolicy: 5PerMin
     authType: Application & Application User
   - target: /warehouses
     verb: GET
-    throttlingPolicy: 10PerMin
     authType: Application & Application User
   - target: /warehouses/{warehouseId}/stock
     verb: GET
-    throttlingPolicy: 10PerMin
     authType: Application & Application User
   tags:
   - integration
