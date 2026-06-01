@@ -5,20 +5,10 @@ data:
   context: /erp-integration
   version: "1.0"
   provider: admin
-  lifeCycleStatus: PUBLISHED
-  isRevision: false
-  revisionId: 0
-  type: HTTP
-  transport:
-  - https
-  policies:
-  - Bronze
-  - Silver
-  - Gold
-  visibility: PUBLIC
-  securityScheme:
-  - oauth2
-  - api_key
+  tags:
+  - integration
+  - erp
+  - demo
   endpointConfig:
     endpoint_type: http
     production_endpoints:
@@ -36,5 +26,3 @@ data:
         enabled: true
         username: admin
         password: admin123
-  endpointImplementationType: ENDPOINT
-  websubSubscriptionConfiguration: null

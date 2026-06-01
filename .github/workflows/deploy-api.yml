@@ -54,6 +54,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Install apictl
         run: |
           curl -sL \
@@ -63,17 +64,63 @@ jobs:
           chmod +x ./apictl/apictl
           sudo mv ./apictl/apictl /usr/local/bin/apictl
           apictl version
+
+      - name: Merge global template with API config
+        run: |
+          pip install pyyaml --quiet
+          python3 << 'PYEOF'
+          import yaml, sys, os
+
+          global_file = "global/api-template.yaml"
+          api_file = "${{ matrix.api_path }}/api.yaml"
+          output_file = "${{ matrix.api_path }}/api.yaml.merged"
+
+          with open(global_file) as f:
+              global_cfg = yaml.safe_load(f)
+
+          with open(api_file) as f:
+              api_cfg = yaml.safe_load(f)
+
+          # Deep merge: global is the base, api-specific overrides on top
+          def deep_merge(base, override):
+              result = base.copy()
+              for k, v in override.items():
+                  if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+                      result[k] = deep_merge(result[k], v)
+                  else:
+                      result[k] = v
+              return result
+
+          merged = {
+              "type": api_cfg.get("type", global_cfg.get("type")),
+              "version": api_cfg.get("version", global_cfg.get("version")),
+              "data": deep_merge(global_cfg.get("data", {}), api_cfg.get("data", {}))
+          }
+
+          with open(output_file, "w") as f:
+              yaml.dump(merged, f, default_flow_style=False, allow_unicode=True)
+
+          print("Merged api.yaml:")
+          with open(output_file) as f:
+              print(f.read())
+          PYEOF
+
+          # Replace api.yaml with merged version
+          mv "${{ matrix.api_path }}/api.yaml.merged" "${{ matrix.api_path }}/api.yaml"
+
       - name: Add APIM environment
         run: |
           apictl add env dev-local \
             --apim "${APIM_HOST}" \
             --token "${APIM_HOST}/oauth2/token"
+
       - name: Login to APIM
         run: |
           echo "${APIM_PASSWORD}" | apictl login dev-local \
             -u "${APIM_USERNAME}" \
             --password-stdin \
             -k
+
       - name: Import API
         run: |
           API_ABS_PATH="${GITHUB_WORKSPACE}/${{ matrix.api_path }}"
@@ -84,6 +131,7 @@ jobs:
             --update \
             --preserve-provider \
             -k
+
       - name: Verify deployment
         run: |
           apictl get apis --environment dev-local -k

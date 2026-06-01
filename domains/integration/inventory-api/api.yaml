@@ -5,17 +5,10 @@ data:
   context: /inventory
   version: "1.0"
   provider: admin
-  lifeCycleStatus: PUBLISHED
-  isRevision: false
-  revisionId: 0
-  type: HTTP
-  transport:
-  - https
-  policies:
-  - Bronze
-  - Silver
-  - Gold
-  visibility: PUBLIC
+  tags:
+  - integration
+  - inventory
+  - demo
   endpointConfig:
     endpoint_type: http
     production_endpoints:
@@ -33,34 +26,3 @@ data:
         enabled: true
         username: admin
         password: admin123
-  endpointImplementationType: ENDPOINT
-  websubSubscriptionConfiguration: null
-  operations:
-  - target: /products
-    verb: GET
-    authType: Application & Application User
-  - target: /products
-    verb: POST
-    authType: Application & Application User
-  - target: /products/{productId}
-    verb: GET
-    authType: Application & Application User
-  - target: /products/{productId}
-    verb: PUT
-    authType: Application & Application User
-  - target: /stock/{productId}
-    verb: GET
-    authType: Application & Application User
-  - target: /stock/{productId}
-    verb: PATCH
-    authType: Application & Application User
-  - target: /warehouses
-    verb: GET
-    authType: Application & Application User
-  - target: /warehouses/{warehouseId}/stock
-    verb: GET
-    authType: Application & Application User
-  tags:
-  - integration
-  - inventory
-  - demo

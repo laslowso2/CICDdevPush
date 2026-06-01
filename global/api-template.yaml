@@ -1,0 +1,67 @@
+type: api
+version: v4.3.0
+data:
+  # ------------------------------------------------------------------
+  # GLOBAL PLATFORM STANDARDS - managed by platform team
+  # These settings are enforced on ALL APIs via the CI/CD pipeline.
+  # Do not override these in your api.yaml unless explicitly approved.
+  # ------------------------------------------------------------------
+
+  # Transport - HTTPS only
+  transport:
+  - https
+
+  # Security - OAuth2 and API Key both required
+  securityScheme:
+  - oauth2
+  - api_key
+
+  authorizationHeader: Authorization
+
+  # Subscription tiers
+  policies:
+  - Bronze
+  - Silver
+  - Gold
+
+  # Lifecycle
+  lifeCycleStatus: PUBLISHED
+  isRevision: false
+  revisionId: 0
+  endpointImplementationType: ENDPOINT
+  websubSubscriptionConfiguration: null
+
+  # Visibility
+  visibility: PUBLIC
+  subscriptionAvailability: ALL_TENANTS
+
+  # CORS - permissive for all environments
+  corsConfiguration:
+    corsConfigurationEnabled: true
+    accessControlAllowOrigins:
+    - "*"
+    accessControlAllowCredentials: false
+    accessControlAllowHeaders:
+    - authorization
+    - Access-Control-Allow-Origin
+    - Content-Type
+    - SOAPAction
+    - apikey
+    - Internal-Key
+    accessControlAllowMethods:
+    - GET
+    - PUT
+    - POST
+    - DELETE
+    - PATCH
+    - OPTIONS
+
+  # ------------------------------------------------------------------
+  # API-SPECIFIC FIELDS - override these in your api.yaml
+  # ------------------------------------------------------------------
+  # name: YourAPIName
+  # version: "1.0"
+  # context: /your-api
+  # provider: admin
+  # tags: []
+  # endpointConfig: {}
