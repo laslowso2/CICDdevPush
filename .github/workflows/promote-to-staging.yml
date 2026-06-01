@@ -85,7 +85,6 @@ jobs:
             --environment dev-local \
             --format JSON \
             -k
-          find ${HOME}/.wso2apictl -name "*.zip" | head -1
           EXPORTED_ZIP=$(find ${HOME}/.wso2apictl -name "*.zip" | head -1)
           cp "${EXPORTED_ZIP}" "exported/${ARTIFACT_NAME}.zip"
           echo "EXPORTED_ZIP=exported/${ARTIFACT_NAME}.zip" >> $GITHUB_ENV
@@ -93,7 +92,7 @@ jobs:
 
       - name: Save artifact to repo
         run: |
-          mkdir -p "artifacts/staging/${{ github.event.inputs.domain }}"
+          mkdir -p "artifacts/staging/${DOMAIN}"
           cp "${EXPORTED_ZIP}" "artifacts/staging/${DOMAIN}/${ARTIFACT_NAME}.zip"
 
       - name: Import API to Staging
@@ -101,7 +100,6 @@ jobs:
           apictl import api \
             --file "${GITHUB_WORKSPACE}/artifacts/staging/${DOMAIN}/${ARTIFACT_NAME}.zip" \
             --environment stage-local \
-            --params "${GITHUB_WORKSPACE}/environments/staging.params.yaml" \
             --update \
             --preserve-provider \
             -k
