@@ -106,6 +106,7 @@ jobs:
             --environment stage-local \
             --update \
             --preserve-provider \
+            --rotate-revision \
             -k
 
       - name: Verify deployment on Staging
