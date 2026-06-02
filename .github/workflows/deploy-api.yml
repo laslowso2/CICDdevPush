@@ -100,9 +100,6 @@ jobs:
               yaml.dump(merged, f, default_flow_style=False, allow_unicode=True)
           PYEOF
 
-          echo "=== MERGED api.yaml CONTENT ==="
-          cat "${{ matrix.api_path }}/api.yaml.merged"
-          echo "=== END ==="
           mv "${{ matrix.api_path }}/api.yaml.merged" "${{ matrix.api_path }}/api.yaml"
 
       - name: Add APIM environment
@@ -127,6 +124,7 @@ jobs:
             --environment dev-local \
             --update \
             --preserve-provider \
+            --rotate-revision \
             -k
 
       - name: Verify deployment
