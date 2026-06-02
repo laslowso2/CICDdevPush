@@ -1,7 +1,7 @@
 deploy:
   import:
     preserveProvider: true
-    rotateRevision: false
+    rotateRevision: true
     update: true
 name: InventoryAPI
 version: "1.0"
