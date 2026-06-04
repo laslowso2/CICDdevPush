@@ -107,18 +107,18 @@ jobs:
           mkdir -p artifact_unpacked
           unzip "${EXPORTED_ZIP}" -d artifact_unpacked
 
-          # Find api.yaml inside the export (WSO2 places it under Meta-information/)
-          API_YAML=$(find artifact_unpacked -name "api.yaml" | head -1)
-          echo "Patching visibility in: ${API_YAML}"
+          # WSO2 exports api.json (not api.yaml) when using --format JSON
+          API_JSON=$(find artifact_unpacked -name "api.json" | head -1)
+          echo "Patching visibility in: ${API_JSON}"
 
-          python3 - "${API_YAML}" "${DOMAIN}" << 'PYEOF'
-          import sys, yaml
+          python3 - "${API_JSON}" "${DOMAIN}" << 'PYEOF'
+          import sys, json, yaml
           from pathlib import Path
 
-          api_yaml_path = sys.argv[1]
+          api_json_path = sys.argv[1]
           domain = sys.argv[2].lower()
 
-          # Single source of truth: read rules from repo config
+          # Single source of truth: read rules from repo config (still yaml)
           vis_cfg = yaml.safe_load(Path("global/domain-visibility.yaml").read_text())
           rules = vis_cfg.get("domains", {}).get(domain)
 
@@ -126,8 +126,8 @@ jobs:
               print(f"WARNING: domain '{domain}' not in domain-visibility.yaml, skipping patch")
               sys.exit(0)
 
-          with open(api_yaml_path) as f:
-              cfg = yaml.safe_load(f)
+          with open(api_json_path) as f:
+              cfg = json.load(f)
 
           data = cfg.get("data", {})
           data["visibility"] = rules["visibility"]
@@ -143,8 +143,8 @@ jobs:
               data.pop("visibleRoles", None)
 
           cfg["data"] = data
-          with open(api_yaml_path, "w") as f:
-              yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+          with open(api_json_path, "w") as f:
+              json.dump(cfg, f, indent=2)
 
           print(f"Patched: visibility={data['visibility']}, visibleRoles={data.get('visibleRoles', [])}")
           PYEOF
