@@ -1,0 +1,18 @@
+type: api
+version: v4.3.0
+data:
+  name: CatalogAPI
+  context: /catalog
+  version: "1.0"
+  provider: admin
+  tags:
+    - public
+    - catalog
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: https://localhost:9090/api/catalog
+    sandbox_endpoints:
+      url: https://localhost:9091/api/catalog
+  # visibility is intentionally omitted here - injected by pipeline from
+  # domain-visibility.yaml (public → PUBLIC, anonymous access)

@@ -1,0 +1,29 @@
+# Domain Visibility Rules
+# ---------------------------------------------------------------
+# Controls how APIs appear in the WSO2 Developer Portal per domain.
+# The CI/CD pipeline reads this file during merge and injects the
+# correct visibility settings before every import (Dev and Staging).
+#
+# visibility values (WSO2 APIM):
+#   PUBLIC     - visible to anonymous users (no login required)
+#   PRIVATE    - visible to any logged-in subscriber
+#   RESTRICTED - visible only to subscribers with listed roles
+#
+# visibleRoles: only used when visibility is RESTRICTED.
+#   Additional roles can be added at the API level in api.yaml
+#   (data.visibleRoles). The pipeline unions them with this list.
+# ---------------------------------------------------------------
+
+domains:
+  finance:
+    visibility: RESTRICTED
+    visibleRoles:
+      - finance
+
+  integration:
+    visibility: PRIVATE
+    visibleRoles: []
+
+  public:
+    visibility: PUBLIC
+    visibleRoles: []

@@ -65,42 +65,11 @@ jobs:
           sudo mv ./apictl/apictl /usr/local/bin/apictl
           apictl version
 
-      - name: Merge global template with API config
+      - name: Merge global template and domain visibility into api.yaml
         run: |
+          DOMAIN=$(echo "${{ matrix.api_path }}" | awk -F'/' '{print $2}')
           pip install pyyaml --quiet
-          python3 << 'PYEOF'
-          import yaml
-
-          global_file = "global/api-template.yaml"
-          api_file = "${{ matrix.api_path }}/api.yaml"
-          output_file = "${{ matrix.api_path }}/api.yaml.merged"
-
-          with open(global_file) as f:
-              global_cfg = yaml.safe_load(f)
-
-          with open(api_file) as f:
-              api_cfg = yaml.safe_load(f)
-
-          def deep_merge(base, override):
-              result = base.copy()
-              for k, v in override.items():
-                  if k in result and isinstance(result[k], dict) and isinstance(v, dict):
-                      result[k] = deep_merge(result[k], v)
-                  else:
-                      result[k] = v
-              return result
-
-          merged = {
-              "type": api_cfg.get("type", global_cfg.get("type")),
-              "version": api_cfg.get("version", global_cfg.get("version")),
-              "data": deep_merge(global_cfg.get("data", {}), api_cfg.get("data", {}))
-          }
-
-          with open(output_file, "w") as f:
-              yaml.dump(merged, f, default_flow_style=False, allow_unicode=True)
-          PYEOF
-
-          mv "${{ matrix.api_path }}/api.yaml.merged" "${{ matrix.api_path }}/api.yaml"
+          python3 global/merge_api_config.py "${{ matrix.api_path }}" "${DOMAIN}"
 
       - name: Add APIM environment
         run: |

@@ -10,8 +10,13 @@ on:
         description: "API version e.g. 1.0"
         required: true
       domain:
-        description: "Domain folder e.g. finance or integration"
+        description: "Domain folder"
         required: true
+        type: choice
+        options:
+          - finance
+          - integration
+          - public
 
 permissions:
   contents: write
@@ -93,6 +98,60 @@ jobs:
           cp "${EXPORTED_ZIP}" "exported/${ARTIFACT_NAME}.zip"
           echo "EXPORTED_ZIP=exported/${ARTIFACT_NAME}.zip" >> $GITHUB_ENV
           echo "Exported: exported/${ARTIFACT_NAME}.zip"
+
+      - name: Inject domain visibility into exported artifact
+        run: |
+          pip install pyyaml --quiet
+
+          # Unpack the exported zip
+          mkdir -p artifact_unpacked
+          unzip "${EXPORTED_ZIP}" -d artifact_unpacked
+
+          # Find api.yaml inside the export (WSO2 places it under Meta-information/)
+          API_YAML=$(find artifact_unpacked -name "api.yaml" | head -1)
+          echo "Patching visibility in: ${API_YAML}"
+
+          python3 - "${API_YAML}" "${DOMAIN}" << 'PYEOF'
+          import sys, yaml
+          from pathlib import Path
+
+          api_yaml_path = sys.argv[1]
+          domain = sys.argv[2].lower()
+
+          # Single source of truth: read rules from repo config
+          vis_cfg = yaml.safe_load(Path("global/domain-visibility.yaml").read_text())
+          rules = vis_cfg.get("domains", {}).get(domain)
+
+          if rules is None:
+              print(f"WARNING: domain '{domain}' not in domain-visibility.yaml, skipping patch")
+              sys.exit(0)
+
+          with open(api_yaml_path) as f:
+              cfg = yaml.safe_load(f)
+
+          data = cfg.get("data", {})
+          data["visibility"] = rules["visibility"]
+
+          # Union domain roles with any roles already on the exported API
+          existing_roles = data.get("visibleRoles", [])
+          domain_roles   = rules.get("visibleRoles", [])
+          merged_roles   = sorted(set(existing_roles) | set(domain_roles))
+
+          if merged_roles:
+              data["visibleRoles"] = merged_roles
+          else:
+              data.pop("visibleRoles", None)
+
+          cfg["data"] = data
+          with open(api_yaml_path, "w") as f:
+              yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+          print(f"Patched: visibility={data['visibility']}, visibleRoles={data.get('visibleRoles', [])}")
+          PYEOF
+
+          # Repack into a new zip (overwrite original exported zip)
+          cd artifact_unpacked && zip -r "../${EXPORTED_ZIP}" . && cd ..
+          echo "Repacked artifact: ${EXPORTED_ZIP}"
 
       - name: Save artifact to repo
         run: |
